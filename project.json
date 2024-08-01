@@ -1,0 +1,7 @@
+{
+    "type": "web",
+    "file": "Equalizer.html",
+    "general": {
+        "supportsaudioprocessing": true
+    }
+}

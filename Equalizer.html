@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            overflow-y: hidden;
+            /* Hide vertical scrollbar */
+            overflow-x: hidden;
+            /* Hide horizontal scrollbar */
+            background-color: rgb(0, 0, 0);
+        }
+    </style>
+    <title>Equalizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/addons/p5.dom.min.js"></script>
+</head>
+
+<body>
+    <script>
+        window.addEventListener('load', _ => {
+            let audio = [];
+        })
+
+        const listener = arr => {
+            audio = arr;
+        }
+        // NOISE DATA
+        /* must be before you register the audio listener */
+        var data = [];
+        if (!window.wallpaperRegisterAudioListener) {
+            var wallpaperAudioInterval = null;
+            window.wallpaperRegisterAudioListener = function (callback) {
+                if (wallpaperAudioInterval) {
+                    // clear the older interval 
+                    clearInterval(_wallpaperAudioInterval);
+                    wallpaperAudioInterval = null;
+                }
+
+                // set new interval
+                wallpaperAudioInterval = setInterval(function () {
+                    for (var i = 0; i < 128; i++) {
+                        var v = Math.random() * 1.5; // real data can be above 1 as well
+                        data[i] = v;
+                        data[i + 128] = v;
+                    }
+                    callback(data);
+                }, 33); // wallpaper engine gives audio data back at about 30fps, so 33ms it is
+            };
+        }
+
+        window.wallpaperRegisterAudioListener(listener);
+
+        let bars = [];
+        let particles = [];
+        let barCount;
+        let counter;
+        let img;
+        let maxLife;
+        // let rotationIndex = 0;
+        // const rotationStep = 1;
+        // let rotationTimer = 0;
+
+        function preload() {
+            img = new Image();
+            img.src = "anivia.png";
+        }
+
+        function setup() {
+            createCanvas(5760, 2078);  // double
+            frameRate(24);
+            colorMode(HSB);
+            barCount = 64;
+            maxLife = 750; //400 speed 7
+            counter = 0;
+            for (let i = 0; i < barCount; i++) {
+                let angle = map(i, 0, barCount - 1, 0, TWO_PI);
+                let x = 3840 + cos(angle) * 100;
+                let y = height / 2 + sin(angle) * 100;
+
+                bars.push({
+                    x: x,
+                    y: y,
+                    angle: angle,
+                    length: random(0, 200),
+                });
+            }
+        }
+
+        function draw() {
+            counter++;
+            background(0);
+            drawingContext.drawImage(img, 3840 - 100, height / 2 - 100, 200, 200);
+
+            for (let i = 0; i < bars.length; i++) {
+                let bar = bars[i];
+                let endX = bar.x + cos(bar.angle) * bar.length;
+                let endY = bar.y + sin(bar.angle) * bar.length;
+
+                // Draw bar
+                stroke((i * 10 + counter) % 360, 255, 255);
+                strokeWeight(8);
+                if (bar.length > 3) {
+                    line(bar.x, bar.y, endX, endY);
+                }
+
+                // Emit particle
+                if (bar.length >= 70) { //82
+                    particles.push({
+                        x: endX,
+                        y: endY,
+                        vx: 1,
+                        vy: 1,
+                        barIndex: i,
+                        color: color((i * 10 + counter) % 360, 255, 255),
+                        lifespan: maxLife,
+                        velocity: bar.length / 40,
+                        // lifespan: maxLife * (bar.length / 50),
+                        offset: random(-0.3, 0.3),
+                        size: 7, //4
+                        //size: int(8 + audio[int(random(0, 128))] * 4)
+                    });
+                }
+            }
+
+            // Draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                let bar = bars[p.barIndex];
+                let speed = map(p.lifespan, 0, maxLife, 0.25, p.velocity);
+                p.vx = (cos(bar.angle) + p.offset) * speed;
+                p.vy = (sin(bar.angle) + p.offset) * speed;
+                p.x += p.vx;
+                p.y += p.vy;
+
+                p.lifespan--;
+                // p.color.setAlpha(map(p.lifespan, 0, maxLife, 0, 1));
+                stroke(p.color);
+                strokeWeight(map(p.lifespan, 0, maxLife, 0.75, p.size));
+                point(p.x, p.y);
+                //rect(p.x, p.y, p.length, 8);
+                if (p.lifespan <= 0) {
+                    particles.splice(i, 1);
+                }
+
+            }
+            // if (rotationTimer = 1000) {
+            //     audio = audio.concat(audio.splice(0, rotationIndex));
+            //     rotationIndex = (rotationIndex + rotationStep) % audio.length;
+            //     rotationTime = 0;
+            // } else {
+            //     rotationTimer++;
+            // }
+            // Bar length
+            // let cumulativeAudio = 0;
+            // for (let i = 0; i < audio.length; i++) {
+            //     cumulativeAudio += audio[i];
+            // }
+            // cumulativeAudio *= 1.4;
+            // if (cumulativeAudio > 15) {
+
+            // }
+            for (let i = 0; i < bars.length; i++) {
+                bars[i].length = audio[int(random(0, 128))] * 100;
+                //bars[i].length = cumulativeAudio + (random(-25, 25));
+                //bars[i].length = audio[i] * 75;
+            }
+
+        }
+
+    </script>
+</body>
+
+</html>
